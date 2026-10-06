@@ -120,8 +120,33 @@ def _pkl_project_impl(rctx):
     pkl_project_metadata = _eval_pkl_project(rctx, pkl_project_path, extra_args = env_vars + rctx.attr.extra_flags)
     has_package = "package" in pkl_project_metadata
 
+    # Warn if a reader scheme is wired via Bazel but not declared in the PklProject's
+    # evaluatorSettings.externalResourceReaders. The Bazel --external-resource-reader flag
+    # overrides the PklProject executable for hermetic local builds, but a published package
+    # must declare the scheme in its PklProject for non-Bazel consumers to resolve it.
+    if rctx.attr.external_resource_readers:
+        evaluator_settings = pkl_project_metadata.get("evaluatorSettings") or {}
+        declared_readers = evaluator_settings.get("externalResourceReaders") or {}
+        for scheme in rctx.attr.external_resource_readers.keys():
+            if scheme not in declared_readers:
+                # buildifier: disable=print
+                print((
+                    "WARNING: pkl_project '{name}': reader scheme '{scheme}' is wired via Bazel " +
+                    "(external_resource_readers) but is not declared in {project}'s " +
+                    "evaluatorSettings.externalResourceReaders. The Bazel-built reader will work " +
+                    "for local builds, but consumers of a published package will not be able to " +
+                    "resolve the '{scheme}:' scheme. Add:\n" +
+                    "    evaluatorSettings {{ externalResourceReaders {{ [\"{scheme}\"] {{ executable = \"...\" }} }} }}"
+                ).format(
+                    name = rctx.attr.name,
+                    scheme = scheme,
+                    project = rctx.attr.pkl_project,
+                ))
+
+    needs_project_rule = has_package or bool(rctx.attr.external_resource_readers)
+
     build_bazel_content = ""
-    if has_package:
+    if needs_project_rule:
         build_bazel_content += 'load("@rules_pkl//pkl/private:pkl_project_rule.bzl", "pkl_project_rule")\n'
 
     build_bazel_content += """load("@rules_pkl//pkl/private:pkl_cache.bzl", "pkl_cache")
@@ -130,26 +155,38 @@ package(default_visibility = ["//visibility:public"])
 
 """
 
-    if has_package:
+    if needs_project_rule:
+        readers_str = ""
+        if rctx.attr.external_resource_readers:
+            readers_str = "    external_resource_readers = {{\n{entries}    }},\n".format(
+                entries = "".join([
+                    '        "{scheme}": "{label}",\n'.format(scheme = s, label = l)
+                    for s, l in rctx.attr.external_resource_readers.items()
+                ]),
+            )
+
         build_bazel_content += """
 pkl_project_rule(
     name = "project",
     pkl_project_file = "PklProject",
     pkl_project_deps = "PklProject.deps.json",
-)
-"""
+{readers})
+""".format(readers = readers_str)
+
+    project_rule_attr = ""
+    if needs_project_rule:
+        project_rule_attr = '    pkl_project_rule = ":project",\n'
 
     build_bazel_content += """
 pkl_cache(
     name = "packages",
     pkl_project = "PklProject",
     pkl_project_deps = "PklProject.deps.json",
-    items = {targets_for_all},
+{project_rule_attr}    items = {targets_for_all},
 )
 
 """.format(
-        pkl_project_file = "PklProject",
-        pkl_project_deps = "PklProject.deps.json",
+        project_rule_attr = project_rule_attr,
         targets_for_all = repr(targets_for_all),
     )
 
@@ -214,6 +251,11 @@ pkl_project = repository_rule(
         "environment": attr.string_dict(
             doc = """Dictionary of name value pairs used to pass in Pkl env vars.
                 See the Pkl docs: https://pkl-lang.org/main/current/pkl-cli/index.html#command-eval""",
+            default = {},
+        ),
+        "external_resource_readers": attr.string_dict(
+            doc = """Map from Pkl scheme name to Bazel label string for the reader executable.
+These are embedded verbatim in the generated BUILD file's pkl_project_rule target.""",
             default = {},
         ),
     },

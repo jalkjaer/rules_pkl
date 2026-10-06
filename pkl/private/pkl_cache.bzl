@@ -17,7 +17,7 @@ Declaring packages _expected_ to be in the cache (populated by pkl_deps reposito
 """
 
 load(":pkl_package_names.bzl", "get_terminal_package_name")
-load(":providers.bzl", "PklCacheInfo", "PklFileInfo")
+load(":providers.bzl", "PklCacheInfo", "PklFileInfo", "PklMetadataInfo")
 
 PklCacheEntryInfo = provider(
     fields = {
@@ -94,6 +94,12 @@ shift; shift;
         arguments = [args],
     )
 
+    # Must be a tuple (immutable): PklCacheInfo is stored in a depset, and depset
+    # elements may not contain mutable values such as lists.
+    readers = ()
+    if ctx.attr.pkl_project_rule:
+        readers = tuple(ctx.attr.pkl_project_rule[PklMetadataInfo].external_resource_readers)
+
     return [
         DefaultInfo(
             files = depset([output_dir, script]),
@@ -107,6 +113,7 @@ shift; shift;
                     pkl_project = ctx.file.pkl_project,
                     pkl_project_deps = ctx.file.pkl_project_deps,
                     label = ctx.label,
+                    external_resource_readers = readers,
                 ),
             ]),
         ),
@@ -123,6 +130,11 @@ pkl_cache = rule(
         ),
         "pkl_project_deps": attr.label(
             allow_single_file = True,
+        ),
+        "pkl_project_rule": attr.label(
+            providers = [[PklMetadataInfo]],
+            doc = """Optional pkl_project_rule target. When set, its external_resource_readers
+are inherited by every pkl_eval that depends on this cache.""",
         ),
     },
 )

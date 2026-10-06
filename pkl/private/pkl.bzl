@@ -119,6 +119,30 @@ def _prepare_pkl_script(ctx, is_test_target):
         no_cache_flag = ["--no-cache"]
         args += no_cache_flag
 
+    # external_resource_readers is optional on PklCacheInfo: caches constructed by
+    # third-party rules (e.g. the poison_cache test rule) may omit it entirely, so
+    # fall back to an empty tuple when the field is absent.
+    external_resource_readers = ()
+    if len(caches):
+        external_resource_readers = getattr(caches[0], "external_resource_readers", ())
+
+    reader_tools = []
+    reader_files = []
+    for reader in external_resource_readers:
+        exe = reader.files_to_run.executable
+        path = exe.short_path if is_test_target else exe.path
+        args += ["--external-resource-reader", "{}={}".format(reader.scheme, path)]
+
+        # files_to_run is a native FilesToRunProvider for executable targets
+        # (go_binary, sh_binary, custom rules). For plain file targets
+        # (exports_files, http_file, gs_file) pkl_project_rule synthesises a
+        # struct with only .executable set — pass the file via inputs instead
+        # of tools to avoid Bazel rejecting the non-provider object.
+        if hasattr(reader.files_to_run, "runfiles_manifest"):
+            reader_tools.append(reader.files_to_run)
+        else:
+            reader_files.append(exe)
+
     script = ctx.executable._pkl_script
 
     dep_files = [
@@ -137,6 +161,7 @@ def _prepare_pkl_script(ctx, is_test_target):
     direct_files = [script, symlinks_json_file] + all_files
     if len(caches):
         direct_files += cache_deps
+        direct_files += [r.files_to_run.executable for r in external_resource_readers]
 
     runfiles = ctx.runfiles(
         files = direct_files + [
@@ -152,7 +177,10 @@ def _prepare_pkl_script(ctx, is_test_target):
         pkl_toolchain.cli[DefaultInfo].default_runfiles,
     )
 
-    return script, runfiles, args
+    for reader in external_resource_readers:
+        runfiles = runfiles.merge(reader.default_runfiles)
+
+    return script, runfiles, args, reader_tools, reader_files
 
 _PKL_EVAL_ATTRS = {
     "srcs": attr.label_list(
@@ -188,6 +216,14 @@ _PKL_EVAL_ATTRS = {
         doc = """Disable caching of packages""",
         default = False,
     ),
+    "use_default_shell_env": attr.bool(
+        default = False,
+        doc = """Pass the host shell environment to the pkl eval action.
+Set to True when external readers need PATH or HOME to be available, for example:
+- Readers that invoke host-installed tools (e.g. sops, docker credential helpers).
+- Readers that are plain downloaded binaries requiring OCI registry auth via ~/.docker.
+Equivalent to use_default_shell_env in ctx.actions.run_shell.""",
+    ),
     "outs": attr.output_list(
         doc = "Names of the output files to generate. Defaults to `<rule name>.<format>`. If the format attribute is unset, use `<rule name>.pcf`. Expects a single file if `multiple_outputs` is not set to `True`.",
     ),
@@ -205,7 +241,7 @@ _PKL_EVAL_ATTRS = {
 def _pkl_eval_impl(ctx):
     pkl_toolchain = ctx.toolchains["//pkl:toolchain_type"]
 
-    script, runfiles, common_args = _prepare_pkl_script(ctx, is_test_target = False)
+    script, runfiles, common_args, reader_tools, reader_files = _prepare_pkl_script(ctx, is_test_target = False)
 
     if not ctx.attr.multiple_outputs and len(ctx.attr.outs) > 1:
         fail("expecting single output file, however {outputs_count} outputs have been specified. Set `multiple_outputs=True` if expecting multiple outputs."
@@ -250,15 +286,16 @@ def _pkl_eval_impl(ctx):
     )
 
     ctx.actions.run(
-        inputs = runfiles.files,
+        inputs = depset(reader_files, transitive = [runfiles.files]),
         outputs = outputs,
         executable = script,
         tools = [
             pkl_toolchain.cli[DefaultInfo].files_to_run,
             pkl_toolchain.symlink_tool[DefaultInfo].files_to_run,
-        ],
+        ] + reader_tools,
         arguments = [args],
         mnemonic = "PklEval",
+        use_default_shell_env = ctx.attr.use_default_shell_env,
         execution_requirements = {
             "supports-path-mapping": "1",
         },
@@ -275,7 +312,7 @@ pkl_eval = rule(
 )
 
 def _pkl_test_impl(ctx):
-    script, runfiles, common_args = _prepare_pkl_script(ctx, is_test_target = True)
+    script, runfiles, common_args, _reader_tools, _reader_files = _prepare_pkl_script(ctx, is_test_target = True)
 
     output_script = ctx.actions.declare_file(ctx.label.name + ".sh")
 

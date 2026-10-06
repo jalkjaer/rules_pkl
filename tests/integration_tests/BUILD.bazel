@@ -129,6 +129,19 @@ bazel_integration_tests(
     workspace_path = "example_workspaces/mirror_rewrite",
 )
 
+bazel_integration_tests(
+    name = "hermetic_external_reader_test",
+    bazel_versions = bazel_binaries.versions.all,
+    tags = integration_test_utils.DEFAULT_INTEGRATION_TEST_TAGS + [
+        "no-sandbox",
+    ],
+    test_runner = ":simple_test_runner",
+    workspace_files = integration_test_utils.glob_workspace_files("example_workspaces/hermetic_external_reader") + [
+        "//:workspace_files",
+    ],
+    workspace_path = "example_workspaces/hermetic_external_reader",
+)
+
 # By default, the integration test targets are tagged as `manual`, so we need
 # define a `test_suite` target for the integration test to be executed during
 # bazel test //...
@@ -161,6 +174,10 @@ test_suite(
         ) +
         integration_test_utils.bazel_integration_test_names(
             ":mirror_rewrite_test",
+            bazel_binaries.versions.all,
+        ) +
+        integration_test_utils.bazel_integration_test_names(
+            ":hermetic_external_reader_test",
             bazel_binaries.versions.all,
         ),
     visibility = ["//:__subpackages__"],
