@@ -32,6 +32,11 @@ PklCacheInfo = provider(
         "pkl_project": "A `File` representing the PklProject that this cache was created from. Used for mapping shortnames to cache entries.",
         "pkl_project_deps": "A `File` representing the PklProject.deps.json that this cache was created from.",
         "local_projects": "A tuple of structs with fields `file` (the `PklProject` `File` of a local project dependency) and `path` (its directory, relative to the root PklProject). Each file is staged at `<path>/PklProject`.",
+        "external_resource_readers": (
+            "list of struct(scheme=str, files_to_run=FilesToRun, default_runfiles=runfiles). " +
+            "Inherited from the pkl_project_rule wired into this cache. " +
+            "Empty list when no pkl_project_rule is set."
+        ),
     },
 )
 
@@ -55,5 +60,9 @@ PklMetadataInfo = provider(
         "has_local_dependencies": "Whether the PklProject has local project dependencies",
         "pkl_project_name": "the name of the project in the PklProject file",
         "pkl_project_version": "the version of the project in the PklProject file",
+        "external_resource_readers": (
+            "list of struct(scheme=str, files_to_run=FilesToRun, default_runfiles=runfiles). " +
+            "One entry per external resource reader declared on the pkl_project_rule."
+        ),
     },
 )

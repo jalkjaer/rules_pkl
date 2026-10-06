@@ -17,7 +17,7 @@ Declaring packages _expected_ to be in the cache (populated by pkl_deps reposito
 """
 
 load(":pkl_package_names.bzl", "get_terminal_package_name")
-load(":providers.bzl", "PklCacheInfo", "PklFileInfo")
+load(":providers.bzl", "PklCacheInfo", "PklFileInfo", "PklMetadataInfo")
 
 PklCacheEntryInfo = provider(
     fields = {
@@ -101,6 +101,12 @@ shift; shift;
             fail("Expected exactly one file for local project '{}', got: {}".format(path, files))
         local_projects.append(struct(file = files[0], path = path))
 
+    # Must be a tuple (immutable): PklCacheInfo is stored in a depset, and depset
+    # elements may not contain mutable values such as lists.
+    readers = ()
+    if ctx.attr.pkl_project_rule:
+        readers = tuple(ctx.attr.pkl_project_rule[PklMetadataInfo].external_resource_readers)
+
     return [
         DefaultInfo(
             files = depset([output_dir, script]),
@@ -116,6 +122,7 @@ shift; shift;
                     # Must be a tuple: `PklCacheInfo` is stored in a depset, which requires immutable elements.
                     local_projects = tuple(local_projects),
                     label = ctx.label,
+                    external_resource_readers = readers,
                 ),
             ]),
         ),
@@ -137,6 +144,11 @@ pkl_cache = rule(
             allow_files = True,
             default = {},
             doc = "Map of `PklProject` files of local project dependencies to their directory, relative to the root PklProject.",
+        ),
+        "pkl_project_rule": attr.label(
+            providers = [[PklMetadataInfo]],
+            doc = """Optional pkl_project_rule target. When set, its external_resource_readers
+are inherited by every pkl_eval that depends on this cache.""",
         ),
     },
 )
