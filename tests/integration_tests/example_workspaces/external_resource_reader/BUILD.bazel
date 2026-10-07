@@ -15,6 +15,7 @@
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@rules_go//go:def.bzl", "go_binary")
 load("@rules_pkl//pkl:defs.bzl", "pkl_eval", "pkl_test")
+load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 # Example external resource reader for the "reader+echo:" scheme.
 # go_binary produces a statically-linked native binary that needs no runfiles
@@ -28,9 +29,9 @@ load("@rules_pkl//pkl:defs.bzl", "pkl_eval", "pkl_test")
 go_binary(
     name = "echo_reader",
     srcs = ["echo_reader.go"],
+    pure = "on",
     visibility = ["//visibility:public"],
     deps = ["@com_github_apple_pkl_go//pkl"],
-    pure = "on",
 )
 
 # A plain-file copy of echo_reader, registered under "reader+echofile".
@@ -45,11 +46,34 @@ genrule(
     visibility = ["//visibility:public"],
 )
 
+# A reader that depends on its runfiles: the sh_binary locates the real Go
+# reader through the bash runfiles library and execs it. Registered under
+# "reader+echowrapped".
+#
+# - pkl_eval: the reader is an action tool, so its own <exe>.runfiles tree is
+#   staged next to it and RUNFILES_DIR is unset (resolves via $0.runfiles).
+# - pkl_test: the reader's runfiles are merged into the test's runfiles
+#   (resolves via RUNFILES_DIR).
+sh_binary(
+    name = "echo_reader_wrapper",
+    srcs = ["echo_reader_wrapper.sh"],
+    data = [":echo_reader"],
+    visibility = ["//visibility:public"],
+    deps = ["@rules_shell//shell/runfiles"],
+)
+
 pkl_eval(
     name = "example",
     srcs = ["example.pkl"],
-    deps = ["@echo_reader_project//:packages"],
     format = "yaml",
+    deps = ["@echo_reader_project//:packages"],
+)
+
+pkl_eval(
+    name = "example_wrapped",
+    srcs = ["wrapped.pkl"],
+    format = "yaml",
+    deps = ["@echo_reader_project//:packages"],
 )
 
 pkl_test(
@@ -62,4 +86,10 @@ diff_test(
     name = "example_diff_test",
     file1 = "expected_output.yaml",
     file2 = ":example",
+)
+
+diff_test(
+    name = "example_wrapped_diff_test",
+    file1 = "expected_wrapped.yaml",
+    file2 = ":example_wrapped",
 )

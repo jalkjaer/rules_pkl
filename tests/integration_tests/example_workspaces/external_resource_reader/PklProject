@@ -32,6 +32,9 @@ evaluatorSettings {
     ["reader+echofile"] {
       executable = "does-not-exist-echo_reader"
     }
+    ["reader+echowrapped"] {
+      executable = "does-not-exist-echo_reader_wrapper"
+    }
     ["reader+echoext"] {
       executable = "does-not-exist-ext_reader"
     }

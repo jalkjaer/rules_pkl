@@ -45,7 +45,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Close()
+	// Run() blocks until the client has been closed by pkl's close message, so
+	// no deferred client.Close() here: a second close panics.
 	if err := client.Run(); err != nil {
 		log.Fatal(err)
 	}
