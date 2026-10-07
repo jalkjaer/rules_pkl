@@ -92,7 +92,7 @@ def _prepare_pkl_script(ctx, is_test_target):
         suite_name_parts = package_parts + label_parts
 
     # The 'args' lists for 'pkl_eval' and 'pkl_test' differ because for `pkl_eval`, files are passed as file targets to enable
-    # path stripping on the `ctx.Args` object when using the '--experimental_output_path=strip' flag. Currently, test rules
+    # path stripping on the `ctx.Args` object when using the '--experimental_output_paths=strip' flag. Currently, test rules
     # don't support using the `ctx.Args` object, which will be addressed by the following upstream PR
     # (https://github.com/bazelbuild/bazel/pull/16430).
     args = [
