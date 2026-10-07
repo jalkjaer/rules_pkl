@@ -35,7 +35,7 @@ pkl = use_extension("@rules_pkl//pkl/extensions:pkl.bzl", "pkl")
 pkl.project(
     name = "echo_reader_project",
     external_resource_readers = {
-        "reader+echo": "@@//:echo_reader",
+        "//:echo_reader": "reader+echo",
     },
     pkl_project = "//:PklProject",
     pkl_project_deps = "//:PklProject.deps.json",
