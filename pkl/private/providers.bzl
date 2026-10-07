@@ -33,8 +33,8 @@ PklCacheInfo = provider(
         "pkl_project_deps": "A `File` representing the PklProject.deps.json that this cache was created from.",
         "external_resource_readers": (
             "list of struct(scheme=str, files_to_run=FilesToRun, default_runfiles=runfiles). " +
-            "Inherited from the pkl_project_rule wired into this cache. " +
-            "Empty list when no pkl_project_rule is set."
+            "Inherited from the pkl_project_rule target passed as pkl_cache.pkl_project. " +
+            "Empty tuple when pkl_project is a plain file (no PklMetadataInfo)."
         ),
     },
 )

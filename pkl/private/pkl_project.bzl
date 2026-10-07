@@ -173,20 +173,18 @@ pkl_project_rule(
 {readers})
 """.format(readers = readers_str)
 
-    project_rule_attr = ""
-    if needs_project_rule:
-        project_rule_attr = '    pkl_project_rule = ":project",\n'
+    pkl_project_attr = '":project"' if needs_project_rule else '"PklProject"'
 
     build_bazel_content += """
 pkl_cache(
     name = "packages",
-    pkl_project = "PklProject",
+    pkl_project = {pkl_project_attr},
     pkl_project_deps = "PklProject.deps.json",
-{project_rule_attr}    items = {targets_for_all},
+    items = {targets_for_all},
 )
 
 """.format(
-        project_rule_attr = project_rule_attr,
+        pkl_project_attr = pkl_project_attr,
         targets_for_all = repr(targets_for_all),
     )
 
