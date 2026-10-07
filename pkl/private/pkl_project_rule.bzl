@@ -54,6 +54,7 @@ def _pkl_project_rule_impl(ctx):
             default_runfiles = target[DefaultInfo].default_runfiles,
         ))
     return [
+        DefaultInfo(files = depset([ctx.file.pkl_project_file])),
         PklMetadataInfo(
             pkl_project_file = ctx.file.pkl_project_file,
             pkl_project_deps = ctx.file.pkl_project_deps,

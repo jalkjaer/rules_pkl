@@ -34,8 +34,8 @@ PklCacheInfo = provider(
         "local_projects": "A tuple of structs with fields `file` (the `PklProject` `File` of a local project dependency) and `path` (its directory, relative to the root PklProject). Each file is staged at `<path>/PklProject`.",
         "external_resource_readers": (
             "list of struct(scheme=str, files_to_run=FilesToRun, default_runfiles=runfiles). " +
-            "Inherited from the pkl_project_rule wired into this cache. " +
-            "Empty list when no pkl_project_rule is set."
+            "Inherited from the pkl_project_rule target passed as pkl_cache.pkl_project. " +
+            "Empty tuple when pkl_project is a plain file (no PklMetadataInfo)."
         ),
     },
 )

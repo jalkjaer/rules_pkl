@@ -104,8 +104,9 @@ shift; shift;
     # Must be a tuple (immutable): PklCacheInfo is stored in a depset, and depset
     # elements may not contain mutable values such as lists.
     readers = ()
-    if ctx.attr.pkl_project_rule:
-        readers = tuple(ctx.attr.pkl_project_rule[PklMetadataInfo].external_resource_readers)
+    pkl_project_meta = ctx.attr.pkl_project
+    if pkl_project_meta and PklMetadataInfo in pkl_project_meta:
+        readers = tuple(pkl_project_meta[PklMetadataInfo].external_resource_readers)
 
     return [
         DefaultInfo(
@@ -136,6 +137,9 @@ pkl_cache = rule(
         ),
         "pkl_project": attr.label(
             allow_single_file = True,
+            doc = """The PklProject file, or a pkl_project_rule target. When a pkl_project_rule
+target is passed, its external_resource_readers are inherited by every pkl_eval that
+depends on this cache.""",
         ),
         "pkl_project_deps": attr.label(
             allow_single_file = True,
@@ -144,11 +148,6 @@ pkl_cache = rule(
             allow_files = True,
             default = {},
             doc = "Map of `PklProject` files of local project dependencies to their directory, relative to the root PklProject.",
-        ),
-        "pkl_project_rule": attr.label(
-            providers = [[PklMetadataInfo]],
-            doc = """Optional pkl_project_rule target. When set, its external_resource_readers
-are inherited by every pkl_eval that depends on this cache.""",
         ),
     },
 )
