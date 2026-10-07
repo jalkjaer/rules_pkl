@@ -19,6 +19,11 @@ stardoc_with_diff_test(
     bzl_library_target = "//pkl:defs",
 )
 
+stardoc_with_diff_test(
+    name = "pkl_extension_docs",
+    bzl_library_target = "//pkl/extensions:pkl",
+)
+
 update_docs(
     name = "update",
 )

@@ -12,11 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+load("@bazel_skylib//:bzl_library.bzl", "bzl_library")
+
+exports_files(["pkl.bzl"])
+
 filegroup(
     name = "all_files",
     srcs = glob(["*"]),
     visibility = [
         "//:__pkg__",
         "//tests/integration_tests:__subpackages__",
+    ],
+)
+
+bzl_library(
+    name = "pkl",
+    srcs = ["pkl.bzl"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//pkl:defs",
+        "//pkl/private:docs",
     ],
 )
