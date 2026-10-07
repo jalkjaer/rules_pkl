@@ -31,6 +31,10 @@ For further information on the rules provided, check out the [`rules_pkl` docume
 
 [`rules_pkl` documentation]: https://github.com/apple/rules_pkl/blob/main/docs/rules_pkl_docs.md
 
+For wiring Bazel-built external resource readers, see [External Resource Readers].
+
+[External Resource Readers]: https://github.com/apple/rules_pkl/blob/main/docs/external_resource_readers.md
+
 ## Minimum required versions
 
 ### Minimum Pkl version
