@@ -2,6 +2,29 @@
 
 Public API re-exports
 
+<a id="pkl_cache"></a>
+
+## pkl_cache
+
+<pre>
+load("@rules_pkl//pkl:defs.bzl", "pkl_cache")
+
+pkl_cache(<a href="#pkl_cache-name">name</a>, <a href="#pkl_cache-items">items</a>, <a href="#pkl_cache-pkl_project">pkl_project</a>, <a href="#pkl_cache-pkl_project_deps">pkl_project_deps</a>)
+</pre>
+
+
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="pkl_cache-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="pkl_cache-items"></a>items |  -   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
+| <a id="pkl_cache-pkl_project"></a>pkl_project |  The PklProject file, or a pkl_project_rule target. When a pkl_project_rule target is passed, its external_resource_readers are inherited by every pkl_eval that depends on this cache.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="pkl_cache-pkl_project_deps"></a>pkl_project_deps |  -   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+
+
 <a id="pkl_codegen_java_toolchain"></a>
 
 ## pkl_codegen_java_toolchain
@@ -122,6 +145,29 @@ You should have at most one `pkl_package` rule per `pkl_project` repo rule.
 | <a id="pkl_package-extra_flags"></a>extra_flags |  -   | List of strings | optional |  `[]`  |
 | <a id="pkl_package-project"></a>project |  -   | <a href="https://bazel.build/concepts/labels">Label</a> | required |  |
 | <a id="pkl_package-strip_prefix"></a>strip_prefix |  Strip a directory prefix from the srcs.   | String | optional |  `""`  |
+
+
+<a id="pkl_project_rule"></a>
+
+## pkl_project_rule
+
+<pre>
+load("@rules_pkl//pkl:defs.bzl", "pkl_project_rule")
+
+pkl_project_rule(<a href="#pkl_project_rule-name">name</a>, <a href="#pkl_project_rule-external_resource_readers">external_resource_readers</a>, <a href="#pkl_project_rule-pkl_project_deps">pkl_project_deps</a>, <a href="#pkl_project_rule-pkl_project_file">pkl_project_file</a>)
+</pre>
+
+
+
+**ATTRIBUTES**
+
+
+| Name  | Description | Type | Mandatory | Default |
+| :------------- | :------------- | :------------- | :------------- | :------------- |
+| <a id="pkl_project_rule-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
+| <a id="pkl_project_rule-external_resource_readers"></a>external_resource_readers |  Map from the label of the reader executable to its Pkl scheme name (e.g. "reader+helm"). Accepts both executable targets (go_binary, sh_binary, custom rules) and plain file targets (exports_files, http_file, gs_file). Each label is built in the exec configuration and passed to the pkl CLI as --external-resource-reader <scheme>=<path>. Two labels mapping to the same scheme is an error.<br><br>Note: readers are built for the exec platform (the machine running the build). Under cross-platform pkl_test (e.g. target platform = iOS, exec platform = Linux x86_64), the reader binary will be built for the exec platform, which may differ from the target platform. This is usually correct for readers (which run on the build host), but it means reader binaries cannot reference target-platform-specific toolchain outputs.   | <a href="https://bazel.build/rules/lib/dict">Dictionary: Label -> String</a> | optional |  `{}`  |
+| <a id="pkl_project_rule-pkl_project_deps"></a>pkl_project_deps |  -   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@rules_pkl//pkl/private:PklProject.deps.json"`  |
+| <a id="pkl_project_rule-pkl_project_file"></a>pkl_project_file |  -   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `"@rules_pkl//pkl/private:PklProject"`  |
 
 
 <a id="pkl_test"></a>
