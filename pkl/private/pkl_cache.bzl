@@ -59,6 +59,11 @@ OUTPUT_DIR="$1"
 shift
 mkdir -p "$OUTPUT_DIR"
 
+# Marker file so the tree artifact is never empty. Bazel 7.6.1 and 8.7.0 drop an
+# empty tree artifact from sandboxed pkl_test runfiles, which then fails when
+# the cache root is symlinked or copied into the test's working directory.
+: > "$OUTPUT_DIR/.rules_pkl_cache"
+
 """
 
     for item in ctx.attr.items:
