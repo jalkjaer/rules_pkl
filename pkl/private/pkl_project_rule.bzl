@@ -84,7 +84,14 @@ pkl_project_rule = rule(
 rules) and plain file targets (exports_files, http_file, gs_file). Each label is
 built in the exec configuration and passed to the pkl CLI as
 --external-resource-reader <scheme>=<path>. Two labels mapping to the same scheme
-is an error.""",
+is an error.
+
+Note: readers are built for the exec platform (the machine running the
+build). Under cross-platform pkl_test (e.g. target platform = iOS, exec
+platform = Linux x86_64), the reader binary will be built for the exec
+platform, which may differ from the target platform. This is usually
+correct for readers (which run on the build host), but it means reader
+binaries cannot reference target-platform-specific toolchain outputs.""",
         ),
     },
 )
