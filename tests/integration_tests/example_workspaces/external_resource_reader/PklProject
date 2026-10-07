@@ -24,13 +24,16 @@ amends "pkl:Project"
 evaluatorSettings {
   externalResourceReaders {
     ["reader+echo"] {
-      executable = "echo_reader"
+      // The executable name below does not exist on PATH. Bazel-built readers
+      // override this via the --external-resource-reader flag. If that flag
+      // were absent, Pkl would fail trying to exec this non-existent binary.
+      executable = "does-not-exist-echo_reader"
     }
     ["reader+echofile"] {
-      executable = "echo_reader"
+      executable = "does-not-exist-echo_reader"
     }
     ["reader+echoext"] {
-      executable = "ext_reader"
+      executable = "does-not-exist-ext_reader"
     }
   }
 }
