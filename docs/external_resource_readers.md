@@ -79,7 +79,7 @@ pkl_eval(
 ```
 
 The `@my_cache//:packages` target carries both the PklProject metadata and the
-reader mapping. No manual `pkl_project_rule` or `pkl_cache` targets are needed.
+reader mapping. `pkl.project()` is the supported way to wire readers.
 
 **Accepted target kinds for reader labels:**
 
@@ -87,27 +87,6 @@ reader mapping. No manual `pkl_project_rule` or `pkl_cache` targets are needed.
 |------|---------------|-------|
 | `go_binary`, `sh_binary`, custom executable rule | native `FilesToRunProvider` | Passed as a tool to the action |
 | `genrule` output, `http_file` (with `executable = True`), `exports_files` of a single file | `None` (plain-file path) | `http_file` requires `executable = True`; plain-file readers have no runfiles |
-
-**Manual wiring** (without `pkl.project()`):
-
-```python
-# BUILD.bazel
-pkl_project_rule(
-    name = "project",
-    pkl_project_file = "PklProject",
-    pkl_project_deps = "PklProject.deps.json",
-    external_resource_readers = {
-        "//:my_reader": "reader+myscheme",
-    },
-)
-
-pkl_cache(
-    name = "packages",
-    pkl_project = ":project",   # accepts pkl_project_rule targets
-    pkl_project_deps = "PklProject.deps.json",
-    items = [...],
-)
-```
 
 ---
 
