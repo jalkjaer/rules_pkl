@@ -129,16 +129,14 @@ def _prepare_pkl_script(ctx, is_test_target):
     reader_tools = []
     reader_files = []
     for reader in external_resource_readers:
-        exe = reader.files_to_run.executable
+        exe = reader.executable
         path = exe.short_path if is_test_target else exe.path
         args += ["--external-resource-reader", "{}={}".format(reader.scheme, path)]
 
         # files_to_run is a native FilesToRunProvider for executable targets
-        # (go_binary, sh_binary, custom rules). For plain file targets
-        # (exports_files, http_file, gs_file) pkl_project_rule synthesises a
-        # struct with only .executable set — pass the file via inputs instead
-        # of tools to avoid Bazel rejecting the non-provider object.
-        if hasattr(reader.files_to_run, "runfiles_manifest"):
+        # (go_binary, sh_binary, custom rules). For plain file targets it is
+        # None — pass the file via inputs instead of tools.
+        if reader.files_to_run != None:
             reader_tools.append(reader.files_to_run)
         else:
             reader_files.append(exe)
@@ -161,7 +159,7 @@ def _prepare_pkl_script(ctx, is_test_target):
     direct_files = [script, symlinks_json_file] + all_files
     if len(caches):
         direct_files += cache_deps
-        direct_files += [r.files_to_run.executable for r in external_resource_readers]
+        direct_files += [r.executable for r in external_resource_readers]
 
     runfiles = ctx.runfiles(
         files = direct_files + [
