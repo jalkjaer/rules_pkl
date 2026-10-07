@@ -129,17 +129,12 @@ def _prepare_pkl_script(ctx, is_test_target):
     reader_tools = []
     reader_files = []
     for reader in external_resource_readers:
-        exe = reader.executable
-        path = exe.short_path if is_test_target else exe.path
-        args += ["--external-resource-reader", "{}={}".format(reader.scheme, path)]
-
-        # files_to_run is a native FilesToRunProvider for executable targets
-        # (go_binary, sh_binary, custom rules). For plain file targets it is
-        # None — pass the file via inputs instead of tools.
+        # Separate executable targets (go_binary, sh_binary, custom rules) from
+        # plain file targets. files_to_run is None for plain-file readers.
         if reader.files_to_run != None:
             reader_tools.append(reader.files_to_run)
         else:
-            reader_files.append(exe)
+            reader_files.append(reader.executable)
 
     script = ctx.executable._pkl_script
 
@@ -178,7 +173,7 @@ def _prepare_pkl_script(ctx, is_test_target):
     for reader in external_resource_readers:
         runfiles = runfiles.merge(reader.default_runfiles)
 
-    return script, runfiles, args, reader_tools, reader_files
+    return script, runfiles, args, reader_tools, reader_files, external_resource_readers
 
 _PKL_EVAL_ATTRS = {
     "srcs": attr.label_list(
@@ -239,7 +234,7 @@ Equivalent to use_default_shell_env in ctx.actions.run_shell.""",
 def _pkl_eval_impl(ctx):
     pkl_toolchain = ctx.toolchains["//pkl:toolchain_type"]
 
-    script, runfiles, common_args, reader_tools, reader_files = _prepare_pkl_script(ctx, is_test_target = False)
+    script, runfiles, common_args, reader_tools, reader_files, external_resource_readers = _prepare_pkl_script(ctx, is_test_target = False)
 
     if not ctx.attr.multiple_outputs and len(ctx.attr.outs) > 1:
         fail("expecting single output file, however {outputs_count} outputs have been specified. Set `multiple_outputs=True` if expecting multiple outputs."
@@ -283,6 +278,12 @@ def _pkl_eval_impl(ctx):
         expand_directories = False,
     )
 
+    # Add reader flags using args.add with File objects so that path mapping
+    # (--experimental_output_path=strip) can rewrite the paths correctly.
+    for reader in external_resource_readers:
+        args.add("--external-resource-reader")
+        args.add(reader.executable, format = reader.scheme + "=%s")
+
     ctx.actions.run(
         inputs = depset(reader_files, transitive = [runfiles.files]),
         outputs = outputs,
@@ -310,7 +311,7 @@ pkl_eval = rule(
 )
 
 def _pkl_test_impl(ctx):
-    script, runfiles, common_args, _reader_tools, _reader_files = _prepare_pkl_script(ctx, is_test_target = True)
+    script, runfiles, common_args, _reader_tools, _reader_files, external_resource_readers = _prepare_pkl_script(ctx, is_test_target = True)
 
     output_script = ctx.actions.declare_file(ctx.label.name + ".sh")
 
@@ -319,6 +320,12 @@ def _pkl_test_impl(ctx):
         output_script.path,
         pkl_command,
     ] + common_args
+
+    # For pkl_test the shell script embeds paths as strings, so we keep the
+    # string form here (short_path, resolved at run time via the runfiles tree).
+    for reader in external_resource_readers:
+        test_args += ["--external-resource-reader", "{}={}".format(reader.scheme, reader.executable.short_path)]
+
     args_str = " ".join(["'{}'".format(str(a).replace("'", "\\'")) for a in test_args])
 
     cmd = """#!/usr/bin/env bash
