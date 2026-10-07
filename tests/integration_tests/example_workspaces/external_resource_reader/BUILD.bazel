@@ -23,7 +23,7 @@ load("@rules_pkl//pkl:defs.bzl", "pkl_eval")
 #
 # The reader is wired to the PklProject entirely in MODULE.bazel via
 # pkl.project(external_resource_readers = {...}). The generated
-# @hermetic_reader//:packages target carries the reader mapping into the
+# @echo_reader_project//:packages target carries the reader mapping into the
 # pkl_eval below — no pkl_project_rule / pkl_cache needed here.
 go_binary(
     name = "echo_reader",
@@ -36,7 +36,7 @@ go_binary(
 pkl_eval(
     name = "example",
     srcs = ["example.pkl"],
-    deps = ["@hermetic_reader//:packages"],
+    deps = ["@echo_reader_project//:packages"],
     format = "yaml",
 )
 

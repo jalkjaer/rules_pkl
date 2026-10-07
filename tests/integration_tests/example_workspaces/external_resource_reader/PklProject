@@ -18,7 +18,7 @@ amends "pkl:Project"
 
 // Declare the external resource reader so that the "reader+echo:" scheme is
 // known to Pkl. For non-Bazel consumers of a published package, `executable`
-// must be resolvable on PATH. For hermetic Bazel builds, the
+// must be resolvable on PATH. For Bazel builds, the
 // `--external-resource-reader reader+echo=<bazel-built-path>` flag (injected
 // automatically by the pkl_cache in deps) overrides this executable.
 evaluatorSettings {

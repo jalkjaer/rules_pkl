@@ -29,16 +29,11 @@ bazel_dep(name = "gazelle", version = "0.45.0")
 pkl = use_extension("@rules_pkl//pkl/extensions:pkl.bzl", "pkl")
 
 # Register the PklProject together with the external resource reader mapping.
-# This generates @hermetic_reader//:packages (a pkl_cache) that carries both the
-# PklProject and the reader mapping into any pkl_eval that depends on it — no
-# manual pkl_project_rule / pkl_cache targets needed in BUILD.bazel.
-#
-# The reader label must be CANONICAL (@@-prefixed) because it is embedded into
-# the generated repo's BUILD file and resolved in that repo's mapping context,
-# not this module's. This workspace is the root module, whose canonical repo
-# name is the empty string, so the label is "@@//:echo_reader".
+# This generates @echo_reader_project//:packages (a pkl_cache) that carries both
+# the PklProject and the reader mapping into any pkl_eval that depends on it —
+# no manual pkl_project_rule / pkl_cache targets needed in BUILD.bazel.
 pkl.project(
-    name = "hermetic_reader",
+    name = "echo_reader_project",
     external_resource_readers = {
         "reader+echo": "@@//:echo_reader",
     },
@@ -47,7 +42,7 @@ pkl.project(
 )
 use_repo(
     pkl,
-    "hermetic_reader",
+    "echo_reader_project",
     "pkl-cli-linux-aarch64",
     "pkl-cli-linux-amd64",
     "pkl-cli-macos-aarch64",
