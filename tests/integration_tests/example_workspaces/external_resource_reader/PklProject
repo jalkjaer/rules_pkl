@@ -16,14 +16,10 @@
 
 amends "pkl:Project"
 
-// A real remote dependency keeps the pkl_cache non-empty. With an empty cache,
-// the sandboxed pkl_test (reader_test) failed on Bazel 7.6.1 and 8.7.0 because
-// the empty cache directory was missing from the test's runfiles.
-dependencies {
-  ["io.k8s"] {
-    uri = "package://pkg.pkl-lang.org/pkl-k8s/k8s@1.0.1"
-  }
-}
+// This project deliberately has no dependencies, so its pkl_cache has no items.
+// That covers the empty-cache case: on Bazel 7.6.1 and 8.7.0 an empty cache
+// directory used to be dropped from the sandboxed pkl_test (reader_test)
+// runfiles. pkl_cache now writes a marker file to keep the directory non-empty.
 
 // Declare the external resource reader so that the "reader+echo:" scheme is
 // known to Pkl. For non-Bazel consumers of a published package, `executable`
