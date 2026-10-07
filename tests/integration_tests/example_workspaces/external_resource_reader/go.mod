@@ -1,4 +1,4 @@
-module github.com/apple/rules_pkl/hermetic_external_reader
+module github.com/apple/rules_pkl/external_resource_reader
 
 go 1.22
 

@@ -29,14 +29,6 @@ source "${RUNFILES_DIR:-/dev/null}/$f" 2>/dev/null || \
   { echo>&2 "ERROR: cannot find $f"; exit 1; }; f=; set -e
 # --- end runfiles.bash initialization v3 ---
 
-{
-  echo "echo_reader_wrapper: \$0=$0"
-  echo "echo_reader_wrapper: pwd=$(pwd)"
-  echo "echo_reader_wrapper: RUNFILES_DIR=${RUNFILES_DIR:-<unset>}"
-  echo "echo_reader_wrapper: RUNFILES_MANIFEST_FILE=${RUNFILES_MANIFEST_FILE:-<unset>}"
-  echo "echo_reader_wrapper: \$0.runfiles: $(ls -d "$0.runfiles" 2>&1)"
-} >&2
-
 reader="$(rlocation _main/echo_reader_/echo_reader)"
 if [[ -z "$reader" || ! -x "$reader" ]]; then
   echo "echo_reader_wrapper: cannot locate executable _main/echo_reader_/echo_reader (got '${reader}')" >&2

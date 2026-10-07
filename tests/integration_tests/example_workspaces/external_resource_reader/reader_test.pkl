@@ -15,7 +15,8 @@
 //===----------------------------------------------------------------------===//
 
 /// pkl_test for the external resource reader.
-/// Verifies that the reader+echo and reader+echofile schemes work in a test target.
+/// Verifies that the reader+echo, reader+echofile, reader+echowrapped and
+/// reader+echoext schemes work in a test target.
 
 amends "pkl:test"
 

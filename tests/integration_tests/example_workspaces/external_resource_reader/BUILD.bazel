@@ -19,8 +19,7 @@ load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 # Example external resource reader for the "reader+echo:" scheme.
 # go_binary produces a statically-linked native binary that needs no runfiles
-# or interpreter to start, so it works correctly when pkl spawns it as a
-# subprocess without RUNFILES_DIR being set.
+# or interpreter to start.
 #
 # The reader is wired to the PklProject entirely in MODULE.bazel via
 # pkl.project(external_resource_readers = {...}). The generated
