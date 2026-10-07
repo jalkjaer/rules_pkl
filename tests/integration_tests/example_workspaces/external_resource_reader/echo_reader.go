@@ -27,13 +27,14 @@
 //	    external_resource_readers = {
 //	        "//:echo_reader": "reader+echo",
 //	        "//:echo_reader_plain": "reader+echofile",
+//	        "//:echo_reader_wrapper": "reader+echowrapped",
 //	    },
 //	    pkl_project = "//:PklProject",
 //	    pkl_project_deps = "//:PklProject.deps.json",
 //	)
 //
-// Any resource URI of the form "reader+echo:<text>" or "reader+echofile:<text>"
-// returns "<text>\n" as its content.
+// Any resource URI of the form "reader+echo:<text>", "reader+echofile:<text>"
+// or "reader+echowrapped:<text>" returns "<text>\n" as its content.
 package main
 
 import (
