@@ -43,10 +43,10 @@ def _pkl_project_rule_impl(ctx):
             # Plain-file readers have no runfiles.
             files = target[DefaultInfo].files.to_list()
             if len(files) != 1:
-                fail(
-                    "external_resource_readers: non-executable target {} must have exactly " +
-                    "one file, got {}".format(target.label, len(files)),
-                )
+                fail("external_resource_readers: non-executable target {} must have exactly one file, got {}".format(
+                    target.label,
+                    len(files),
+                ))
             exe = files[0]
             files_to_run = None
 
