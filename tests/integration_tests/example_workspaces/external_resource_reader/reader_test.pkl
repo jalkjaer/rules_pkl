@@ -26,6 +26,9 @@ facts {
   ["reader+echofile scheme returns URI opaque as content"] {
     read("reader+echofile:hello-from-file-test").text.trim() == "hello-from-file-test"
   }
+  ["reader+echowrapped (runfiles-dependent reader) returns URI opaque as content"] {
+    read("reader+echowrapped:hello-from-wrapped-test").text.trim() == "hello-from-wrapped-test"
+  }
   ["reader+echoext (external-repo reader) returns URI opaque as content"] {
     read("reader+echoext:hello-from-ext-repo").text.trim() == "hello-from-ext-repo"
   }

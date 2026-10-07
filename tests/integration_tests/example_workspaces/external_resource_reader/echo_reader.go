@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// echo_reader is an example external resource reader for the "reader+echo:" and
-// "reader+echofile:" schemes, used in the external_resource_reader integration test.
+// echo_reader is an example external resource reader for the "reader+echo:",
+// "reader+echofile:" and "reader+echowrapped:" schemes, used in the
+// external_resource_reader integration test.
 //
 // It uses the official pkl-go ExternalReaderClient, which handles the pkl Message
 // Passing API (https://pkl-lang.org/main/current/bindings-specification/message-passing-api.html)
@@ -66,11 +67,15 @@ func main() {
 		// Registering both here means the same binary serves both schemes when
 		// invoked under either --external-resource-reader flag value.
 		pkl.WithExternalClientResourceReader(&echoReader{scheme: "reader+echofile"}),
+		// "reader+echowrapped" scheme: served when this binary is launched via
+		// echo_reader_wrapper (a sh_binary that finds this binary via runfiles).
+		pkl.WithExternalClientResourceReader(&echoReader{scheme: "reader+echowrapped"}),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Close()
+	// Run() blocks until the client has been closed by pkl's close message, so
+	// no deferred client.Close() here: a second close panics.
 	if err := client.Run(); err != nil {
 		log.Fatal(err)
 	}
