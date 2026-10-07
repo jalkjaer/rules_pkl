@@ -97,9 +97,20 @@ shift; shift;
     # Must be a tuple (immutable): PklCacheInfo is stored in a depset, and depset
     # elements may not contain mutable values such as lists.
     readers = ()
-    pkl_project_meta = ctx.attr.pkl_project
-    if pkl_project_meta and PklMetadataInfo in pkl_project_meta:
-        readers = tuple(pkl_project_meta[PklMetadataInfo].external_resource_readers)
+    pkl_project_deps = ctx.file.pkl_project_deps
+    pkl_project_target = ctx.attr.pkl_project
+    if pkl_project_target and PklMetadataInfo in pkl_project_target:
+        meta = pkl_project_target[PklMetadataInfo]
+        readers = tuple(meta.external_resource_readers)
+        if pkl_project_deps == None:
+            pkl_project_deps = meta.pkl_project_deps
+        elif meta.pkl_project_deps and meta.pkl_project_deps.path != pkl_project_deps.path:
+            fail("{}: pkl_project_deps ({}) differs from the pkl_project_deps of {} ({}). Set only one, or make them identical.".format(
+                ctx.label,
+                pkl_project_deps.path,
+                pkl_project_target.label,
+                meta.pkl_project_deps.path,
+            ))
 
     return [
         DefaultInfo(
@@ -112,7 +123,7 @@ shift; shift;
                 PklCacheInfo(
                     root = output_dir,
                     pkl_project = ctx.file.pkl_project,
-                    pkl_project_deps = ctx.file.pkl_project_deps,
+                    pkl_project_deps = pkl_project_deps,
                     label = ctx.label,
                     external_resource_readers = readers,
                 ),
@@ -134,6 +145,9 @@ depends on this cache.""",
         ),
         "pkl_project_deps": attr.label(
             allow_single_file = True,
+            doc = """The PklProject.deps.json file. Optional when `pkl_project` is a pkl_project_rule
+target: the rule's `pkl_project_deps` is used. If both are set and refer to different
+files, analysis fails.""",
         ),
     },
 )

@@ -22,7 +22,7 @@ pkl_cache(<a href="#pkl_cache-name">name</a>, <a href="#pkl_cache-items">items</
 | <a id="pkl_cache-name"></a>name |  A unique name for this target.   | <a href="https://bazel.build/concepts/labels#target-names">Name</a> | required |  |
 | <a id="pkl_cache-items"></a>items |  -   | <a href="https://bazel.build/concepts/labels">List of labels</a> | optional |  `[]`  |
 | <a id="pkl_cache-pkl_project"></a>pkl_project |  The PklProject file, or a pkl_project_rule target. When a pkl_project_rule target is passed, its external_resource_readers are inherited by every pkl_eval that depends on this cache.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
-| <a id="pkl_cache-pkl_project_deps"></a>pkl_project_deps |  -   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
+| <a id="pkl_cache-pkl_project_deps"></a>pkl_project_deps |  The PklProject.deps.json file. Optional when `pkl_project` is a pkl_project_rule target: the rule's `pkl_project_deps` is used. If both are set and refer to different files, analysis fails.   | <a href="https://bazel.build/concepts/labels">Label</a> | optional |  `None`  |
 
 
 <a id="pkl_codegen_java_toolchain"></a>
