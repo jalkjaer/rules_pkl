@@ -12,19 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// echo_reader is an example pkl external resource reader for the "reader+echo:" scheme.
+// echo_reader is an example external resource reader for the "reader+echo:" and
+// "reader+echofile:" schemes, used in the external_resource_reader integration test.
 //
 // It uses the official pkl-go ExternalReaderClient, which handles the pkl Message
 // Passing API (https://pkl-lang.org/main/current/bindings-specification/message-passing-api.html)
 // automatically — no manual msgpack encoding/framing required.
 //
-// The reader is wired into Bazel via:
+// Wiring into Bazel via pkl.project() in MODULE.bazel:
 //
-//	pkl_project_rule(
-//	    external_resource_readers = {"reader+echo": ":echo_reader"},
+//	pkl.project(
+//	    name = "echo_reader_project",
+//	    external_resource_readers = {
+//	        "//:echo_reader": "reader+echo",
+//	        "//:echo_reader_plain": "reader+echofile",
+//	    },
+//	    pkl_project = "//:PklProject",
+//	    pkl_project_deps = "//:PklProject.deps.json",
 //	)
 //
-// Any resource URI of the form "reader+echo:<text>" returns "<text>\n" as its content.
+// Any resource URI of the form "reader+echo:<text>" or "reader+echofile:<text>"
+// returns "<text>\n" as its content.
 package main
 
 import (
