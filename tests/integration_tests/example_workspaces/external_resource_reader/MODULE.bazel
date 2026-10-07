@@ -18,6 +18,12 @@ local_path_override(
     path = "../../../..",
 )
 
+bazel_dep(name = "reader_module", version = "0.0.0")
+local_path_override(
+    module_name = "reader_module",
+    path = "reader_module",
+)
+
 bazel_dep(name = "aspect_bazel_lib", version = "2.21.2")
 
 # rules_go must be >= 0.59.0: that is the first release whose cgo.bzl and
@@ -37,6 +43,7 @@ pkl.project(
     external_resource_readers = {
         "//:echo_reader": "reader+echo",
         "//:echo_reader_plain": "reader+echofile",
+        "@reader_module//:ext_reader": "reader+echoext",
     },
     pkl_project = "//:PklProject",
     pkl_project_deps = "//:PklProject.deps.json",
