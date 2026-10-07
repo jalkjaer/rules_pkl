@@ -209,14 +209,6 @@ _PKL_EVAL_ATTRS = {
         doc = """Disable caching of packages""",
         default = False,
     ),
-    "use_default_shell_env": attr.bool(
-        default = False,
-        doc = """Pass the host shell environment to the pkl eval action.
-Set to True when external readers need PATH or HOME to be available, for example:
-- Readers that invoke host-installed tools (e.g. sops, docker credential helpers).
-- Readers that are plain downloaded binaries requiring OCI registry auth via ~/.docker.
-Equivalent to use_default_shell_env in ctx.actions.run_shell.""",
-    ),
     "outs": attr.output_list(
         doc = "Names of the output files to generate. Defaults to `<rule name>.<format>`. If the format attribute is unset, use `<rule name>.pcf`. Expects a single file if `multiple_outputs` is not set to `True`.",
     ),
@@ -301,9 +293,24 @@ def _pkl_eval_impl(ctx):
     )
     return [DefaultInfo(files = depset(outputs), runfiles = ctx.runfiles(outputs))]
 
+_PKL_EVAL_ONLY_ATTRS = {
+    "use_default_shell_env": attr.bool(
+        default = False,
+        doc = """Pass the host shell environment to the pkl eval action.
+
+The pkl eval action uses ctx.actions.run (not run_shell). When this flag
+is True, the action inherits the full host environment, including PATH,
+HOME, and variables set via --action_env. This is a non-hermetic escape
+hatch for readers that depend on host-installed tools or credentials.
+
+For pkl_test, use the env attribute or --test_env instead.
+""",
+    ),
+}
+
 pkl_eval = rule(
     _pkl_eval_impl,
-    attrs = _PKL_EVAL_ATTRS,
+    attrs = _PKL_EVAL_ATTRS | _PKL_EVAL_ONLY_ATTRS,
     toolchains = [
         "//pkl:toolchain_type",
     ],
