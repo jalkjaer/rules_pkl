@@ -1,0 +1,5 @@
+reader_module
+bazel-bin
+bazel-out
+bazel-external_resource_reader
+bazel-testlogs
