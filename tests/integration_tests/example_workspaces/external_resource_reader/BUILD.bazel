@@ -33,6 +33,18 @@ go_binary(
     pure = "on",
 )
 
+# A plain-file copy of echo_reader, registered under "reader+echofile".
+# This exercises the non-executable (plain-file) code path in pkl_project_rule:
+# files_to_run.executable is None, so the file is passed as an input rather
+# than a tool.  The chmod +x ensures pkl can exec the file as a subprocess.
+genrule(
+    name = "echo_reader_plain",
+    srcs = [":echo_reader"],
+    outs = ["echo_reader_plain_out"],
+    cmd = "cp $(location :echo_reader) $@ && chmod +x $@",
+    visibility = ["//visibility:public"],
+)
+
 pkl_eval(
     name = "example",
     srcs = ["example.pkl"],

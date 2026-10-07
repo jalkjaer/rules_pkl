@@ -36,6 +36,7 @@ pkl.project(
     name = "echo_reader_project",
     external_resource_readers = {
         "//:echo_reader": "reader+echo",
+        "//:echo_reader_plain": "reader+echofile",
     },
     pkl_project = "//:PklProject",
     pkl_project_deps = "//:PklProject.deps.json",

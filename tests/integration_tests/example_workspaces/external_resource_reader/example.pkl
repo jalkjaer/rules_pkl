@@ -19,3 +19,4 @@
 /// echo_reader.go and wired via pkl.project(external_resource_readers=...) in MODULE.bazel.
 
 greeting = read("reader+echo:hello-from-pkl").text.trim()
+greetingFile = read("reader+echofile:hello-from-plain-file").text.trim()
