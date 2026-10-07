@@ -73,7 +73,7 @@ Evaluate Pkl module(s).
 | <a id="pkl_eval-multiple_outputs"></a>multiple_outputs |  Whether to expect to render multiple file outputs. If `outs` is specified then individual generated files will be exposed. Otherwise, a single directory, with the name of the target, containing all generated files will be exposed. (see https://pkl-lang.org/main/current/pkl-cli/index.html#command-eval).   | Boolean | optional |  `False`  |
 | <a id="pkl_eval-no_cache"></a>no_cache |  Disable caching of packages   | Boolean | optional |  `False`  |
 | <a id="pkl_eval-properties"></a>properties |  Dictionary of name value pairs used to pass in Pkl external properties. See the Pkl docs: https://pkl-lang.org/main/current/pkl-cli/index.html#command-eval   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> String</a> | optional |  `{}`  |
-| <a id="pkl_eval-use_default_shell_env"></a>use_default_shell_env |  Pass the host shell environment to the pkl eval action. Set to True when external readers need PATH or HOME to be available, for example: - Readers that invoke host-installed tools (e.g. sops, docker credential helpers). - Readers that are plain downloaded binaries requiring OCI registry auth via ~/.docker. Equivalent to use_default_shell_env in ctx.actions.run_shell.   | Boolean | optional |  `False`  |
+| <a id="pkl_eval-use_default_shell_env"></a>use_default_shell_env |  Pass the host shell environment to the pkl eval action.<br><br>The pkl eval action uses ctx.actions.run (not run_shell). When this flag is True, the action inherits the full host environment, including PATH, HOME, and variables set via --action_env. This is a non-hermetic escape hatch for readers that depend on host-installed tools or credentials.<br><br>For pkl_test, use the env attribute or --test_env instead.   | Boolean | optional |  `False`  |
 
 
 <a id="pkl_library"></a>
@@ -132,7 +132,7 @@ You should have at most one `pkl_package` rule per `pkl_project` repo rule.
 load("@rules_pkl//pkl:defs.bzl", "pkl_test")
 
 pkl_test(<a href="#pkl_test-name">name</a>, <a href="#pkl_test-deps">deps</a>, <a href="#pkl_test-srcs">srcs</a>, <a href="#pkl_test-data">data</a>, <a href="#pkl_test-outs">outs</a>, <a href="#pkl_test-entrypoints">entrypoints</a>, <a href="#pkl_test-expression">expression</a>, <a href="#pkl_test-format">format</a>, <a href="#pkl_test-multiple_outputs">multiple_outputs</a>, <a href="#pkl_test-no_cache">no_cache</a>,
-         <a href="#pkl_test-properties">properties</a>, <a href="#pkl_test-use_default_shell_env">use_default_shell_env</a>)
+         <a href="#pkl_test-properties">properties</a>)
 </pre>
 
 Create a Pkl test that can be run with Bazel.
@@ -153,7 +153,6 @@ Create a Pkl test that can be run with Bazel.
 | <a id="pkl_test-multiple_outputs"></a>multiple_outputs |  Whether to expect to render multiple file outputs. If `outs` is specified then individual generated files will be exposed. Otherwise, a single directory, with the name of the target, containing all generated files will be exposed. (see https://pkl-lang.org/main/current/pkl-cli/index.html#command-eval).   | Boolean | optional |  `False`  |
 | <a id="pkl_test-no_cache"></a>no_cache |  Disable caching of packages   | Boolean | optional |  `False`  |
 | <a id="pkl_test-properties"></a>properties |  Dictionary of name value pairs used to pass in Pkl external properties. See the Pkl docs: https://pkl-lang.org/main/current/pkl-cli/index.html#command-eval   | <a href="https://bazel.build/rules/lib/dict">Dictionary: String -> String</a> | optional |  `{}`  |
-| <a id="pkl_test-use_default_shell_env"></a>use_default_shell_env |  Pass the host shell environment to the pkl eval action. Set to True when external readers need PATH or HOME to be available, for example: - Readers that invoke host-installed tools (e.g. sops, docker credential helpers). - Readers that are plain downloaded binaries requiring OCI registry auth via ~/.docker. Equivalent to use_default_shell_env in ctx.actions.run_shell.   | Boolean | optional |  `False`  |
 
 
 <a id="pkl_toolchain"></a>
