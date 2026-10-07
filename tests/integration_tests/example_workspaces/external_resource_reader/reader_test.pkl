@@ -14,23 +14,19 @@
 // limitations under the License.
 //===----------------------------------------------------------------------===//
 
-amends "pkl:Project"
+/// pkl_test for the external resource reader.
+/// Verifies that the reader+echo and reader+echofile schemes work in a test target.
 
-// Declare the external resource reader so that the "reader+echo:" scheme is
-// known to Pkl. For non-Bazel consumers of a published package, `executable`
-// must be resolvable on PATH. For Bazel builds, the
-// `--external-resource-reader reader+echo=<bazel-built-path>` flag (injected
-// automatically by the pkl_cache in deps) overrides this executable.
-evaluatorSettings {
-  externalResourceReaders {
-    ["reader+echo"] {
-      executable = "echo_reader"
-    }
-    ["reader+echofile"] {
-      executable = "echo_reader"
-    }
-    ["reader+echoext"] {
-      executable = "ext_reader"
-    }
+amends "pkl:test"
+
+facts {
+  ["reader+echo scheme returns URI opaque as content"] {
+    read("reader+echo:hello-from-test").text.trim() == "hello-from-test"
+  }
+  ["reader+echofile scheme returns URI opaque as content"] {
+    read("reader+echofile:hello-from-file-test").text.trim() == "hello-from-file-test"
+  }
+  ["reader+echoext (external-repo reader) returns URI opaque as content"] {
+    read("reader+echoext:hello-from-ext-repo").text.trim() == "hello-from-ext-repo"
   }
 }

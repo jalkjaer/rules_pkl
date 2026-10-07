@@ -14,7 +14,7 @@
 
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@rules_go//go:def.bzl", "go_binary")
-load("@rules_pkl//pkl:defs.bzl", "pkl_eval")
+load("@rules_pkl//pkl:defs.bzl", "pkl_eval", "pkl_test")
 
 # Example external resource reader for the "reader+echo:" scheme.
 # go_binary produces a statically-linked native binary that needs no runfiles
@@ -50,6 +50,12 @@ pkl_eval(
     srcs = ["example.pkl"],
     deps = ["@echo_reader_project//:packages"],
     format = "yaml",
+)
+
+pkl_test(
+    name = "reader_test",
+    srcs = ["reader_test.pkl"],
+    deps = ["@echo_reader_project//:packages"],
 )
 
 diff_test(

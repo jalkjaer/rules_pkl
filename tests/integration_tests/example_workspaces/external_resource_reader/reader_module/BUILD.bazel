@@ -1,0 +1,28 @@
+# Copyright © 2024-2026 Apple Inc. and the Pkl project authors. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   https://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+load("@rules_go//go:def.bzl", "go_binary")
+
+# External-repo reader for the "reader+echoext" scheme.
+# This target lives in the reader_module repo (@@reader_module+//:ext_reader),
+# which is wired into the workspace via bazel_dep + local_path_override.
+# Its short_path in pkl_test will be "../reader_module+/<workspace_name>/ext_reader",
+# verifying that the "../" stripping in _pkl_test_impl is correct.
+go_binary(
+    name = "ext_reader",
+    srcs = ["ext_reader.go"],
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_apple_pkl_go//pkl"],
+    pure = "on",
+)

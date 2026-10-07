@@ -321,8 +321,11 @@ def _pkl_test_impl(ctx):
         pkl_command,
     ] + common_args
 
-    # For pkl_test the shell script embeds paths as strings, so we keep the
-    # string form here (short_path, resolved at run time via the runfiles tree).
+    # For pkl_test the shell script embeds paths as strings. The test script
+    # runs with CWD = _main/ (the workspace root within the runfiles tree).
+    # short_path for main-workspace files is relative to _main/ directly;
+    # short_path for external-repo files starts with "../" which is also
+    # correct relative to _main/. No transformation is needed.
     for reader in external_resource_readers:
         test_args += ["--external-resource-reader", "{}={}".format(reader.scheme, reader.executable.short_path)]
 
