@@ -39,7 +39,15 @@ def _make_files_to_run(target):
 
 def _pkl_project_rule_impl(ctx):
     readers = []
-    for scheme, target in ctx.attr.external_resource_readers.items():
+    seen_schemes = {}
+    for target, scheme in ctx.attr.external_resource_readers.items():
+        if scheme in seen_schemes:
+            fail("external_resource_readers: scheme '{}' is mapped to by both {} and {}".format(
+                scheme,
+                seen_schemes[scheme],
+                target.label,
+            ))
+        seen_schemes[scheme] = target.label
         readers.append(struct(
             scheme = scheme,
             files_to_run = _make_files_to_run(target),
@@ -64,14 +72,15 @@ pkl_project_rule = rule(
             allow_single_file = True,
             default = "PklProject.deps.json",
         ),
-        "external_resource_readers": attr.string_keyed_label_dict(
+        "external_resource_readers": attr.label_keyed_string_dict(
             cfg = "exec",
             allow_files = True,
-            doc = """Map from Pkl scheme name (e.g. "reader+helm") to the label of the
-reader executable. Accepts both executable targets (go_binary, sh_binary, custom
-rules) and plain file targets (exports_files, http_file, gs_file). The executable
-is resolved in the exec configuration and passed to the pkl CLI as
---external-resource-reader <scheme>=<path>.""",
+            doc = """Map from the label of the reader executable to its Pkl scheme name
+(e.g. "reader+helm"). Accepts both executable targets (go_binary, sh_binary, custom
+rules) and plain file targets (exports_files, http_file, gs_file). Each label is
+built in the exec configuration and passed to the pkl CLI as
+--external-resource-reader <scheme>=<path>. Two labels mapping to the same scheme
+is an error.""",
         ),
     },
 )

@@ -160,7 +160,7 @@ package(default_visibility = ["//visibility:public"])
         if rctx.attr.external_resource_readers:
             readers_str = "    external_resource_readers = {{\n{entries}    }},\n".format(
                 entries = "".join([
-                    '        "{scheme}": "{label}",\n'.format(scheme = s, label = l)
+                    '        "{label}": "{scheme}",\n'.format(scheme = s, label = l)
                     for s, l in rctx.attr.external_resource_readers.items()
                 ]),
             )
