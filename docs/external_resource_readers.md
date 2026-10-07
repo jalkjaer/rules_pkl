@@ -113,37 +113,60 @@ pkl_cache(
 
 ## 4. Readers with tool dependencies
 
-A reader that calls other host tools (e.g. `helm`, `sops`) needs those tools
-available when Pkl spawns the reader subprocess.
+A reader can depend on other Bazel-built targets by being an executable target
+with `data`, for example a `sh_binary` that locates a real reader through the
+[bash runfiles library](https://github.com/bazelbuild/rules_shell) and `exec`s it.
+Statically linked binaries (e.g. `go_binary(pure = "on")`) need none of this.
 
-> **Finding (D3):** The reader binary's own runfiles tree is **not** propagated
-> into the `pkl_eval` action sandbox. Only the executable file itself is placed
-> in the sandbox as a tool. This means:
->
-> - **`pkl_eval`:** The reader subprocess runs with no `RUNFILES_DIR` and no
->   `$0.runfiles`. A `sh_binary` wrapper that uses the bash runfiles library to
->   locate a data-dep binary will hang waiting for the runfiles manifest that
->   never arrives.
-> - **`pkl_test`:** The test's merged runfiles tree is available via
->   `RUNFILES_DIR`, so a `sh_binary` wrapper works correctly.
->
-> **Recommendation:** For `pkl_eval`, use statically-linked reader binaries
-> (e.g. `go_binary(pure = "on")`) that bundle all dependencies. For readers
-> that genuinely need host tools, use `use_default_shell_env = True` on
-> `pkl_eval` (Option A).
+How the reader's runfiles reach the process depends on the rule:
 
-For `pkl_test`, a `sh_binary` with `data = [":my_reader"]` works:
+- **`pkl_eval`:** the reader is passed to the action as a tool, so Bazel stages
+  the reader's own `<exe>.runfiles` tree next to it in the sandbox.
+- **`pkl_test`:** the reader's runfiles are merged into the test's runfiles.
+
+Both cases are covered by the `external_resource_reader` integration test
+(`reader+echowrapped`), which runs sandboxed.
 
 ```python
+# BUILD.bazel
 sh_binary(
-    name = "my_reader_wrapper",
-    srcs = ["my_reader_wrapper.sh"],
-    data = [":my_reader"],
+    name = "echo_reader_wrapper",
+    srcs = ["echo_reader_wrapper.sh"],
+    data = [":echo_reader"],
+    deps = ["@rules_shell//shell/runfiles"],
+    visibility = ["//visibility:public"],
 )
 ```
 
-The test runner merges the wrapper's runfiles into the test's runfiles tree,
-so `RUNFILES_DIR` points to the right place.
+```bash
+# echo_reader_wrapper.sh (runfiles.bash init block omitted)
+reader="$(rlocation _main/echo_reader_/echo_reader)"
+if [[ -z "$reader" || ! -x "$reader" ]]; then
+  echo "cannot locate reader (got '${reader}')" >&2
+  exit 1
+fi
+exec "$reader" "$@"
+```
+
+Notes for wrapper authors:
+
+- Pkl talks to the reader over stdin/stdout, so the wrapper must never write to
+  stdout (send diagnostics to stderr) and should `exec` the real reader rather
+  than run it as a child.
+- Fail fast with a non-zero exit when the real reader cannot be located. If the
+  wrapper dies during startup, the evaluation can appear to hang.
+- Paths inside runfiles depend on the rule that built the reader. `rules_go`
+  places the binary at `<name>_/<name>`, not `<name>`. Inspect the
+  `<exe>.runfiles_manifest` if `rlocation` returns nothing. The runfiles
+  library itself is published under
+  `bazel_tools/tools/bash/runfiles/runfiles.bash` in the staged tree.
+- The `args` and `env` attributes of the wrapper target are not applied when
+  Pkl launches it.
+- With `pkl-go`, do not `defer client.Close()` around `client.Run()`.
+  `Run()` already closes the client, and a second close panics.
+
+For readers that need tools installed on the host (e.g. `helm`, `sops`), use
+`use_default_shell_env = True` on `pkl_eval` (Option A).
 
 ---
 
@@ -188,4 +211,7 @@ fetch time.
 - **Plain-file readers have no runfiles.** A non-executable reader target must
   have exactly one file. Such readers cannot use the bash runfiles library.
 
-- **Reader runfiles are not available in `pkl_eval` actions.** See section 4.
+- **`pkl_cache` and `--experimental_output_paths=strip`.** Path mapping
+  currently fails for any `pkl_eval` that depends on a `pkl_cache` (with or
+  without readers), because the cache root is passed as an unmapped path
+  string. This is independent of external resource readers.
