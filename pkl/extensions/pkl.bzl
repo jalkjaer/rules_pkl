@@ -45,23 +45,18 @@ pkl_project = tag_class(
                 See the Pkl docs: https://pkl-lang.org/main/current/pkl-cli/index.html#command-eval""",
             default = {},
         ),
-        "external_resource_readers": attr.string_dict(
-            doc = """Map from Pkl scheme name (e.g. "reader+helm") to the Bazel label of the
-                reader executable. Every pkl_eval/pkl_test that depends on `@<name>//:packages`
+        "external_resource_readers": attr.label_keyed_string_dict(
+            doc = """Map from the Bazel label of the reader executable to its Pkl scheme name
+                (e.g. "reader+helm"). Every pkl_eval/pkl_test that depends on `@<name>//:packages`
                 automatically receives `--external-resource-reader <scheme>=<path>` with no further
                 configuration.
 
-                IMPORTANT: labels are embedded verbatim into the generated BUILD file of the
-                `@<name>` repo and resolved in that repo's mapping context — NOT your module's.
-                Apparent labels like "//:reader" or "@my_reader//:bin" will not resolve. You must
-                use a canonical label with a double-@ prefix, e.g.:
+                Labels are resolved in the caller's module context, so apparent labels work:
 
                     external_resource_readers = {
-                        "reader+helm": "@@my_reader+//:bin",
-                    }
-
-                Find the canonical name with `bazel mod show_repo <apparent_name>` or by inspecting
-                the repo under `bazel-out/.../external/`.""",
+                        "//:my_reader": "reader+helm",
+                    }""",
+            allow_files = True,
             default = {},
         ),
     },
@@ -117,6 +112,13 @@ def _toolchain_extension(module_ctx):
                     )
                     seen_packages.append(package.workspace_name)
 
+            # Convert label_keyed_string_dict (label->scheme) to string_dict
+            # (scheme->canonical-label-string) for the repo rule, which can only
+            # accept strings in its attrs (no label resolution at repo-rule fetch time).
+            readers_for_repo = {}
+            for reader_label, scheme in proj.external_resource_readers.items():
+                readers_for_repo[scheme] = str(reader_label)
+
             # Now set up all the targets that people will rely on in their builds.
             _pkl_project(
                 name = proj.name,
@@ -124,7 +126,7 @@ def _toolchain_extension(module_ctx):
                 pkl_project_deps = proj.pkl_project_deps,
                 environment = proj.environment,
                 extra_flags = proj.extra_flags,
-                external_resource_readers = proj.external_resource_readers,
+                external_resource_readers = readers_for_repo,
             )
 
     cli_binaries = pkl_cli_binaries(version = pkl_version)
