@@ -18,25 +18,6 @@ Implementation of 'pkl_project_rule'.
 
 load("@rules_pkl//pkl/private:providers.bzl", "PklMetadataInfo")
 
-def _make_files_to_run(target):
-    """Return a files_to_run-compatible struct for the given target.
-
-    For executable targets (go_binary, sh_binary, custom rules) this is the
-    native files_to_run object. For plain file targets (exports_files, http_file,
-    gs_file) files_to_run.executable is None; in that case we use the first file
-    from DefaultInfo.files directly as the executable so that plain downloaded
-    binaries can be used as readers without wrapping them in an executable rule.
-    """
-    ftr = target[DefaultInfo].files_to_run
-    if ftr.executable != None:
-        return ftr
-
-    # Plain file target: synthesise a files_to_run-compatible struct.
-    files = target[DefaultInfo].files.to_list()
-    if not files:
-        fail("external_resource_readers: target {} has no files".format(target.label))
-    return struct(executable = files[0])
-
 def _pkl_project_rule_impl(ctx):
     readers = []
     seen_schemes = {}
@@ -48,9 +29,26 @@ def _pkl_project_rule_impl(ctx):
                 target.label,
             ))
         seen_schemes[scheme] = target.label
+
+        ftr = target[DefaultInfo].files_to_run
+        if ftr.executable != None:
+            # Executable target (go_binary, sh_binary, custom rule): use the
+            # native FilesToRunProvider so Bazel can track tools correctly.
+            exe = ftr.executable
+            files_to_run = ftr
+        else:
+            # Plain file target (exports_files, http_file, gs_file): pick the
+            # single file as the executable; no FilesToRunProvider.
+            files = target[DefaultInfo].files.to_list()
+            if not files:
+                fail("external_resource_readers: target {} has no files".format(target.label))
+            exe = files[0]
+            files_to_run = None
+
         readers.append(struct(
             scheme = scheme,
-            files_to_run = _make_files_to_run(target),
+            executable = exe,
+            files_to_run = files_to_run,
             default_runfiles = target[DefaultInfo].default_runfiles,
         ))
     return [
