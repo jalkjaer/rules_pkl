@@ -140,7 +140,7 @@ def _pkl_project_impl(rctx):
                 ).format(
                     name = rctx.attr.name,
                     scheme = scheme,
-                    project = rctx.attr.pkl_project,
+                    project = str(rctx.attr.pkl_project),
                 ))
 
     needs_project_rule = has_package or bool(rctx.attr.external_resource_readers)
