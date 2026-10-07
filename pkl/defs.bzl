@@ -17,17 +17,9 @@ Public API re-exports
 """
 
 load(
-    "//pkl/private:pkl_cache.bzl",
-    _pkl_cache = "pkl_cache",
-)
-load(
     "//pkl/private:pkl.bzl",
     _pkl_eval = "pkl_eval",
     _pkl_test = "pkl_test",
-)
-load(
-    "//pkl/private:pkl_project_rule.bzl",
-    _pkl_project_rule = "pkl_project_rule",
 )
 load(
     "//pkl/private:pkl_codegen_java.bzl",
@@ -56,16 +48,14 @@ load(
     _pkl_toolchain = "pkl_toolchain",
 )
 
-pkl_cache = _pkl_cache
 pkl_doc = _pkl_doc
 pkl_doc_toolchain = _pkl_doc_toolchain
-pkl_eval = _pkl_eval
-pkl_java_library = _pkl_java_library
 pkl_library = _pkl_library
+pkl_eval = _pkl_eval
 pkl_package = _pkl_package
-pkl_project_rule = _pkl_project_rule
 pkl_test = _pkl_test
 pkl_test_suite = _pkl_test_suite
 pkl_toolchain = _pkl_toolchain
 
 pkl_codegen_java_toolchain = _pkl_codegen_java_toolchain
+pkl_java_library = _pkl_java_library
