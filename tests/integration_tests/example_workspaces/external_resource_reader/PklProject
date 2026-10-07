@@ -26,5 +26,8 @@ evaluatorSettings {
     ["reader+echo"] {
       executable = "echo_reader"
     }
+    ["reader+echofile"] {
+      executable = "echo_reader"
+    }
   }
 }

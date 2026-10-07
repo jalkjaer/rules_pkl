@@ -34,23 +34,30 @@ import (
 	"github.com/apple/pkl-go/pkl"
 )
 
-// echoReader implements pkl.ResourceReader for the "reader+echo:" scheme.
-// It returns the opaque part of the URI (everything after "reader+echo:") as the resource content.
-type echoReader struct{}
+// echoReader implements pkl.ResourceReader for a given scheme.
+// It returns the opaque part of the URI as the resource content.
+type echoReader struct{ scheme string }
 
-func (r *echoReader) Scheme() string              { return "reader+echo" }
-func (r *echoReader) IsGlobbable() bool           { return false }
-func (r *echoReader) HasHierarchicalUris() bool   { return false }
-func (r *echoReader) ListElements(_ url.URL) ([]pkl.PathElement, error) { return nil, nil }
+func (r *echoReader) Scheme() string            { return r.scheme }
+func (r *echoReader) IsGlobbable() bool         { return false }
+func (r *echoReader) HasHierarchicalUris() bool { return false }
+func (r *echoReader) ListElements(_ url.URL) ([]pkl.PathElement, error) {
+	return nil, nil
+}
 
 func (r *echoReader) Read(u url.URL) ([]byte, error) {
-	// The opaque part is everything after the "reader+echo:" prefix.
+	// The opaque part is everything after the scheme prefix.
 	return []byte(u.Opaque + "\n"), nil
 }
 
 func main() {
 	client, err := pkl.NewExternalReaderClient(
-		pkl.WithExternalClientResourceReader(&echoReader{}),
+		// "reader+echo" scheme: used by the go_binary executable target.
+		pkl.WithExternalClientResourceReader(&echoReader{scheme: "reader+echo"}),
+		// "reader+echofile" scheme: used by the plain-file (genrule copy) target.
+		// Registering both here means the same binary serves both schemes when
+		// invoked under either --external-resource-reader flag value.
+		pkl.WithExternalClientResourceReader(&echoReader{scheme: "reader+echofile"}),
 	)
 	if err != nil {
 		log.Fatal(err)
