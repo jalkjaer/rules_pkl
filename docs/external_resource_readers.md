@@ -192,5 +192,7 @@ fetch time.
 
 - **`pkl_cache` and `--experimental_output_paths=strip`.** Path mapping
   currently fails for any `pkl_eval` that depends on a `pkl_cache` (with or
-  without readers), because the cache root is passed as an unmapped path
-  string. This is independent of external resource readers.
+  without readers). `pkl_eval` writes its `<name>_symlinks.json` file with plain
+  `file.path` strings, which path mapping does not rewrite, so the symlink tool
+  cannot find the mapped inputs. This is independent of external resource
+  readers.
