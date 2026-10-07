@@ -36,7 +36,12 @@ def root_caches_and_dependencies(deps):
 
     if len(caches) > 1:
         cache_labels = [c.label for c in caches]
-        fail("Only one cache item is allowed. The following labels of caches were seen: ", cache_labels)
+        fail(
+            "Only one pkl_cache is allowed per pkl_eval / pkl_test. " +
+            "If you need multiple caches, merge their items into a single pkl_cache target. " +
+            "Caches with external_resource_readers cannot be merged automatically. " +
+            "The following cache labels were seen: " + str(cache_labels),
+        )
 
     cache_root_path = caches[0].root.path
     cache_dependencies = [caches[0].root, caches[0].pkl_project, caches[0].pkl_project_deps]
