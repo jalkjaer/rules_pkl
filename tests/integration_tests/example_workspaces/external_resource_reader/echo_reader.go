@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// echo_reader is an example external resource reader for the "reader+echo:",
-// "reader+echofile:" and "reader+echowrapped:" schemes, used in the
-// external_resource_reader integration test.
+// echo_reader is an example external resource reader for the "reader+echo:" and
+// "reader+echofile:" schemes, used in the external_resource_reader integration
+// test. See echo_data_reader.go for a reader with a runfiles data dependency.
 //
 // It uses the official pkl-go ExternalReaderClient, which handles the pkl Message
 // Passing API (https://pkl-lang.org/main/current/bindings-specification/message-passing-api.html)
@@ -27,14 +27,14 @@
 //	    external_resource_readers = {
 //	        "//:echo_reader": "reader+echo",
 //	        "//:echo_reader_plain": "reader+echofile",
-//	        "//:echo_reader_wrapper": "reader+echowrapped",
+//	        "//:echo_data_reader": "reader+echodata",
 //	    },
 //	    pkl_project = "//:PklProject",
 //	    pkl_project_deps = "//:PklProject.deps.json",
 //	)
 //
-// Any resource URI of the form "reader+echo:<text>", "reader+echofile:<text>"
-// or "reader+echowrapped:<text>" returns "<text>\n" as its content.
+// Any resource URI of the form "reader+echo:<text>" or "reader+echofile:<text>"
+// returns "<text>\n" as its content.
 package main
 
 import (
@@ -68,9 +68,6 @@ func main() {
 		// Registering both here means the same binary serves both schemes when
 		// invoked under either --external-resource-reader flag value.
 		pkl.WithExternalClientResourceReader(&echoReader{scheme: "reader+echofile"}),
-		// "reader+echowrapped" scheme: served when this binary is launched via
-		// echo_reader_wrapper (a sh_binary that finds this binary via runfiles).
-		pkl.WithExternalClientResourceReader(&echoReader{scheme: "reader+echowrapped"}),
 	)
 	if err != nil {
 		log.Fatal(err)

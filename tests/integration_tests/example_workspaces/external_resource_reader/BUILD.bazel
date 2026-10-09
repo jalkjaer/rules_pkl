@@ -15,7 +15,6 @@
 load("@aspect_bazel_lib//lib:diff_test.bzl", "diff_test")
 load("@rules_go//go:def.bzl", "go_binary")
 load("@rules_pkl//pkl:defs.bzl", "pkl_eval", "pkl_test")
-load("@rules_shell//shell:sh_binary.bzl", "sh_binary")
 
 # Example external resource reader for the "reader+echo:" scheme.
 # go_binary produces a statically-linked native binary that needs no runfiles
@@ -45,20 +44,23 @@ genrule(
     visibility = ["//visibility:public"],
 )
 
-# A reader that depends on its runfiles: the sh_binary locates the real Go
-# reader through the bash runfiles library and execs it. Registered under
-# "reader+echowrapped".
+# A reader with a data dependency: echo_data_reader reads reader_prefix.txt from
+# its runfiles (rules_go runfiles library) and prepends the content to every
+# resource it returns, so the result is only correct if the reader's runfiles
+# were staged. Registered under "reader+echodata".
 #
 # - pkl_eval: the reader is an action tool, so its own <exe>.runfiles tree is
-#   staged next to it and RUNFILES_DIR is unset (resolves via $0.runfiles).
-# - pkl_test: the reader's runfiles are merged into the test's runfiles
-#   (resolves via RUNFILES_DIR).
-sh_binary(
-    name = "echo_reader_wrapper",
-    srcs = ["echo_reader_wrapper.sh"],
-    data = [":echo_reader"],
+#   staged next to it.
+# - pkl_test: the reader's runfiles are merged into the test's runfiles.
+go_binary(
+    name = "echo_data_reader",
+    srcs = ["echo_data_reader.go"],
+    data = [":reader_prefix.txt"],
     visibility = ["//visibility:public"],
-    deps = ["@rules_shell//shell/runfiles"],
+    deps = [
+        "@com_github_apple_pkl_go//pkl",
+        "@rules_go//go/runfiles",
+    ],
 )
 
 pkl_eval(
@@ -69,8 +71,8 @@ pkl_eval(
 )
 
 pkl_eval(
-    name = "example_wrapped",
-    srcs = ["wrapped.pkl"],
+    name = "example_data",
+    srcs = ["data.pkl"],
     format = "yaml",
     deps = ["@echo_reader_project//:packages"],
 )
@@ -88,7 +90,7 @@ diff_test(
 )
 
 diff_test(
-    name = "example_wrapped_diff_test",
-    file1 = "expected_wrapped.yaml",
-    file2 = ":example_wrapped",
+    name = "example_data_diff_test",
+    file1 = "expected_data.yaml",
+    file2 = ":example_data",
 )
