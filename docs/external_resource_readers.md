@@ -92,59 +92,42 @@ reader mapping. `pkl.project()` is the supported way to wire readers.
 
 ## 4. Readers with tool dependencies
 
-A reader can depend on other Bazel-built targets by being an executable target
-with `data`, for example a `sh_binary` that locates a real reader through the
-[bash runfiles library](https://github.com/bazelbuild/rules_shell) and `exec`s it.
-Statically linked binaries (e.g. `go_binary(pure = "on")`) need none of this.
-
-How the reader's runfiles reach the process depends on the rule:
-
-- **`pkl_eval`:** the reader is passed to the action as a tool, so Bazel stages
-  the reader's own `<exe>.runfiles` tree next to it in the sandbox.
-- **`pkl_test`:** the reader's runfiles are merged into the test's runfiles.
-
+A reader is an ordinary executable target, so `data` and other runfiles work as
+usual. Bazel keeps the reader's runfiles tree: with `pkl_eval` it is staged next
+to the reader (`<exe>.runfiles`), and with `pkl_test` it is merged into the
+test's runfiles. Locate files with the runfiles library of the reader's
+language, for example
+[rules_go's runfiles library](https://github.com/bazelbuild/rules_go/tree/master/go/runfiles).
 Both cases are covered by the `external_resource_reader` integration test
-(`reader+echowrapped`), which runs sandboxed.
+(`reader+echodata`).
 
 ```python
 # BUILD.bazel
-sh_binary(
-    name = "echo_reader_wrapper",
-    srcs = ["echo_reader_wrapper.sh"],
-    data = [":echo_reader"],
-    deps = ["@rules_shell//shell/runfiles"],
-    visibility = ["//visibility:public"],
+go_binary(
+    name = "echo_data_reader",
+    srcs = ["echo_data_reader.go"],
+    data = [":reader_prefix.txt"],
+    deps = [
+        "@com_github_apple_pkl_go//pkl",
+        "@rules_go//go/runfiles",
+    ],
 )
 ```
 
-```bash
-# echo_reader_wrapper.sh (runfiles.bash init block omitted)
-reader="$(rlocation _main/echo_reader_/echo_reader)"
-if [[ -z "$reader" || ! -x "$reader" ]]; then
-  echo "cannot locate reader (got '${reader}')" >&2
-  exit 1
-fi
-exec "$reader" "$@"
-```
+Notes for reader authors:
 
-Notes for wrapper authors:
-
-- Pkl talks to the reader over stdin/stdout, so the wrapper must never write to
-  stdout (send diagnostics to stderr) and should `exec` the real reader rather
-  than run it as a child.
-- Fail fast with a non-zero exit when the real reader cannot be located. If the
-  wrapper dies during startup, the evaluation can appear to hang.
-- Paths inside runfiles depend on the rule that built the reader. `rules_go`
-  places the binary at `<name>_/<name>`, not `<name>`. Inspect the
-  `<exe>.runfiles_manifest` if `rlocation` returns nothing. The runfiles
-  library itself is published under
-  `bazel_tools/tools/bash/runfiles/runfiles.bash` in the staged tree.
-- The `args` and `env` attributes of the wrapper target are not applied when
+- Pkl talks to the reader over stdin/stdout, so a reader must never write to
+  stdout other than through the protocol. Send diagnostics to stderr.
+- The `args` and `env` attributes of the reader target are not applied when
   Pkl launches it.
 - With `pkl-go`, do not `defer client.Close()` around `client.Run()`.
   `Run()` already closes the client, and a second close panics.
+- If the reader is started through a wrapper script, make sure the script does
+  not exit before the real reader has started. `pkl eval` can hang in that case
+  instead of reporting an error. Prefer a reader that finds its own runfiles, and
+  return errors from `Read()` so Pkl reports them as evaluation errors.
 
-For readers that need tools installed on the host (e.g. `helm`, `sops`), use
+For readers that need tools installed on the host (i.e. `sops`), use
 `use_default_shell_env = True` on `pkl_eval` (Option A).
 
 ---
@@ -172,27 +155,3 @@ evaluatorSettings {
 If the scheme is wired via `external_resource_readers` in Bazel but not
 declared in `evaluatorSettings`, `rules_pkl` prints a warning at repository
 fetch time.
-
----
-
-## 6. Limitations
-
-- **Readers are built for the exec platform.** Under cross-compilation (e.g.
-  target platform = iOS, exec platform = Linux x86_64), the reader binary is
-  built for the exec platform. This is usually correct, but it means readers
-  cannot reference target-platform-specific toolchain outputs.
-
-- **Multiple caches are not supported.** A `pkl_eval` or `pkl_test` that
-  transitively depends on more than one `pkl_cache` will fail at analysis time.
-  Merge all items into a single `pkl_cache`. Caches with different
-  `external_resource_readers` cannot be merged automatically.
-
-- **Plain-file readers have no runfiles.** A non-executable reader target must
-  have exactly one file. Such readers cannot use the bash runfiles library.
-
-- **`pkl_cache` and `--experimental_output_paths=strip`.** Path mapping
-  currently fails for any `pkl_eval` that depends on a `pkl_cache` (with or
-  without readers). `pkl_eval` writes its `<name>_symlinks.json` file with plain
-  `file.path` strings, which path mapping does not rewrite, so the symlink tool
-  cannot find the mapped inputs. This is independent of external resource
-  readers.

@@ -14,7 +14,8 @@
 // limitations under the License.
 //===----------------------------------------------------------------------===//
 
-/// Reads through a reader that needs its runfiles (echo_reader_wrapper).
-/// The wrapper locates the real Go reader via the bash runfiles library.
+/// Reads through a reader that needs its runfiles (echo_data_reader).
+/// The reader locates a data file (reader_prefix.txt) via the rules_go runfiles
+/// library. The file's content is prepended to the result.
 
-wrapped = read("reader+echowrapped:hello-from-wrapper").text.trim()
+data = read("reader+echodata:hello-from-data-reader").text.trim()

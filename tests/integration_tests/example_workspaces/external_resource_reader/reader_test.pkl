@@ -15,7 +15,7 @@
 //===----------------------------------------------------------------------===//
 
 /// pkl_test for the external resource reader.
-/// Verifies that the reader+echo, reader+echofile, reader+echowrapped and
+/// Verifies that the reader+echo, reader+echofile, reader+echodata and
 /// reader+echoext schemes work in a test target.
 
 amends "pkl:test"
@@ -27,8 +27,8 @@ facts {
   ["reader+echofile scheme returns URI opaque as content"] {
     read("reader+echofile:hello-from-file-test").text.trim() == "hello-from-file-test"
   }
-  ["reader+echowrapped (runfiles-dependent reader) returns URI opaque as content"] {
-    read("reader+echowrapped:hello-from-wrapped-test").text.trim() == "hello-from-wrapped-test"
+  ["reader+echodata (runfiles-dependent reader) prepends the prefix file from its runfiles"] {
+    read("reader+echodata:hello-from-data-test").text.trim() == "from-runfiles-hello-from-data-test"
   }
   ["reader+echoext (external-repo reader) returns URI opaque as content"] {
     read("reader+echoext:hello-from-ext-repo").text.trim() == "hello-from-ext-repo"

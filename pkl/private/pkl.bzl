@@ -92,7 +92,7 @@ def _prepare_pkl_script(ctx, is_test_target):
         suite_name_parts = package_parts + label_parts
 
     # The 'args' lists for 'pkl_eval' and 'pkl_test' differ because for `pkl_eval`, files are passed as file targets to enable
-    # path stripping on the `ctx.Args` object when using the '--experimental_output_paths=strip' flag. Currently, test rules
+    # path stripping on the `ctx.Args` object when using the '--experimental_output_path=strip' flag. Currently, test rules
     # don't support using the `ctx.Args` object, which will be addressed by the following upstream PR
     # (https://github.com/bazelbuild/bazel/pull/16430).
     args = [
@@ -270,8 +270,8 @@ def _pkl_eval_impl(ctx):
         expand_directories = False,
     )
 
-    # Add reader flags using args.add with File objects so that path mapping
-    # (--experimental_output_path=strip) can rewrite the paths correctly.
+    # Add reader flags using args.add with File objects so that Bazel can
+    # rewrite the paths (path mapping).
     for reader in external_resource_readers:
         args.add("--external-resource-reader")
         args.add(reader.executable, format = reader.scheme + "=%s")
