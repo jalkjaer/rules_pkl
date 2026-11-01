@@ -54,7 +54,7 @@ def _pkl_project_multiple_caches_test(ctx):
     env = analysistest.begin(ctx)
     asserts.expect_failure(
         env,
-        """Only one cache item is allowed. The following labels of caches were seen:  ["cache1", "cache2"]""",
+        "Only one pkl_cache is allowed per pkl_eval / pkl_test.",
     )
     return analysistest.end(env)
 

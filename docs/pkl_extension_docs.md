@@ -20,6 +20,14 @@ pkl.install(<a href="#pkl.install-version">version</a>)
 
 ### project
 
+Declares a PklProject and its PklProject.deps.json.
+
+Local project dependencies (`dependencies { ["x"] = import("path/to/PklProject") }`) are supported:
+their `PklProject` files are staged automatically next to the root `PklProject` and watched for changes.
+Add the local project's sources via a `pkl_library` in the `deps` of `pkl_eval`/`pkl_test`.
+Limitations: the root `PklProject` must be `//:PklProject` of the main repository when local
+dependencies are used, and `pkl_package` does not support projects with local dependencies.
+
 **Attributes**
 
 | Name  | Description | Type | Mandatory | Default |

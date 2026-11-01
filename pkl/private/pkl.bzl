@@ -289,11 +289,11 @@ def _pkl_eval_impl(ctx):
     tail_args = ctx.actions.args()
     tail_args.add_all(common_args[2:], expand_directories = False)
 
-    # Add reader flags using args.add with File objects so that Bazel can
-    # rewrite the paths (path mapping).
+    # Add reader flags to tail_args (after shift 11) using args.add with File
+    # objects so that Bazel can rewrite the paths (path mapping).
     for reader in external_resource_readers:
-        args.add("--external-resource-reader")
-        args.add(reader.executable, format = reader.scheme + "=%s")
+        tail_args.add("--external-resource-reader")
+        tail_args.add(reader.executable, format = reader.scheme + "=%s")
 
     ctx.actions.run(
         inputs = depset(reader_files, transitive = [runfiles.files]),
